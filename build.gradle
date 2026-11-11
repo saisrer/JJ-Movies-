@@ -4,6 +4,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
+        // Standard Android Gradle Plugin
         classpath 'com.android.tools.build:gradle:8.1.0'
     }
 }
@@ -16,5 +17,5 @@ allprojects {
 }
 
 task clean(type: Delete) {
-    delete rootProject.build.gradle
+    delete rootProject.buildDir
 }
