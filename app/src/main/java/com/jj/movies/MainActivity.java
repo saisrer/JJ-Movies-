@@ -1,102 +1,95 @@
 package com.jj.movies;
 
-import android.net.Uri;
+import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
-import android.widget.Toast;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.TextView;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import com.google.android.exoplayer2.ExoPlayer;
-import com.google.android.exoplayer2.MediaItem;
-import com.google.android.exoplayer2.ui.StyledPlayerView;
-import org.json.JSONArray;
-import org.json.JSONObject;
-import java.io.IOException;
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import com.bumptech.glide.Glide;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
-
-    private ExoPlayer player;
-    private StyledPlayerView playerView;
-    
-    // Supabase Credentials setup
-    private static final String SUPABASE_URL = "https://nwvjbdiifmdqiyparcbm.supabase.co/rest/v1/movies?select=*";
-    private static final String SUPABASE_KEY = "Sb_publishable_wrzX413fjkXqz6P-WplB6Q_bN5lAJLh";
+    private RecyclerView recyclerView;
+    private MovieAdapter adapter;
+    private List<MovieModel> movieList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        playerView = findViewById(R.id.playerView);
+        recyclerView = findViewById(R.id.recyclerView);
+        recyclerView.setLayoutManager(new GridLayoutManager(this, 2));
 
-        // Initialize ExoPlayer
-        player = new ExoPlayer.Builder(this).build();
-        playerView.setPlayer(player);
-
-        // Fetch Movie Stream URL from Supabase Database
-        fetchMovieFromSupabase();
-    }
-
-    private void fetchMovieFromSupabase() {
-        OkHttpClient client = new OkHttpClient();
-
-        Request request = new Request.Builder()
-                .url(SUPABASE_URL)
-                .addHeader("apikey", SUPABASE_KEY)
-                .addHeader("Authorization", "Bearer " + SUPABASE_KEY)
-                .build();
-
-        client.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(Call call, IOException e) {
-                runOnUiThread(() -> Toast.makeText(MainActivity.this, "Failed to connect to database!", Toast.LENGTH_SHORT).show());
-            }
-
-            @Override
-            public void onResponse(Call call, Response response) throws IOException {
-                if (response.isSuccessful()) {
-                    String responseData = response.body().string();
-                    try {
-                        JSONArray jsonArray = new JSONArray(responseData);
-                        if (jsonArray.length() > 0) {
-                            // Supabase లో ఉన్న మొదటి సినిమా లింక్ ని తీసుకుంటుంది
-                            JSONObject firstMovie = jsonArray.getJSONObject(0);
-                            String streamUrl = firstMovie.getString("stream_url");
-
-                            // Play video on Main UI Thread
-                            runOnUiThread(() -> playVideo(streamUrl));
-                        } else {
-                            runOnUiThread(() -> Toast.makeText(MainActivity.this, "No movies found in database!", Toast.LENGTH_SHORT).show());
-                        }
-                    } catch (Exception e) {
-                        Log.e("SupabaseError", e.getMessage());
-                    }
-                }
-            }
+        movieList = new ArrayList<>();
+        // Sample static data for testing (Supabase fetch kosam tarvatha connect cheyochu)
+        movieList.add(new MovieModel("Sample Movie 1", "https://via.placeholder.com/300", "This is a sample movie description.", "https://www.sample-videos.com/video123/mp4/720/big_buck_bunny_720p_1mb.mp4"));
+        
+        adapter = new MovieAdapter(movieList, movie -> {
+            Intent intent = new Intent(MainActivity.this, DetailActivity.class);
+            intent.putExtra("title", movie.getTitle());
+            intent.putExtra("poster", movie.getPoster());
+            intent.putExtra("desc", movie.getDescription());
+            intent.putExtra("stream_url", movie.getStreamUrl());
+            startActivity(intent);
         });
+        recyclerView.setAdapter(adapter);
     }
 
-    private void playVideo(String url) {
-        if (url != null && !url.isEmpty()) {
-            MediaItem mediaItem = MediaItem.fromUri(Uri.parse(url));
-            player.setMediaItem(mediaItem);
-            player.prepare();
-            player.play();
-        } else {
-            Toast.makeText(this, "Stream URL not found!", Toast.LENGTH_SHORT).show();
+    // Model class
+    public static class MovieModel {
+        String title, poster, description, streamUrl;
+        public MovieModel(String title, String poster, String description, String streamUrl) {
+            this.title = title; this.poster = poster; this.description = description; this.streamUrl = streamUrl;
         }
+        public String getTitle() { return title; }
+        public String getPoster() { return poster; }
+        public String getDescription() { return description; }
+        public String getStreamUrl() { return streamUrl; }
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        if (player != null) {
-            player.release();
-            player = null;
+    // Adapter class
+    public static class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.ViewHolder> {
+        private List<MovieModel> list;
+        private OnItemClickListener listener;
+        public interface OnItemClickListener { void onItemClick(MovieModel movie); }
+
+        public MovieAdapter(List<MovieModel> list, OnItemClickListener listener) {
+            this.list = list; this.listener = listener;
+        }
+
+        @NonNull
+        @Override
+        public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_movie, parent, false);
+            return new ViewHolder(view);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+            MovieModel movie = list.get(position);
+            holder.title.setText(movie.getTitle());
+            Glide.with(holder.img.getContext()).load(movie.getPoster()).into(holder.img);
+            holder.itemView.setOnClickListener(v -> listener.onItemClick(movie));
+        }
+
+        @Override
+        public int getItemCount() { return list.size(); }
+
+        public static class ViewHolder extends RecyclerView.ViewHolder {
+            ImageView img; TextView title;
+            public ViewHolder(@NonNull View itemView) {
+                super(itemView);
+                img = itemView.findViewById(R.id.imgPoster);
+                title = itemView.findViewById(R.id.txtTitle);
+            }
         }
     }
 }
