@@ -1,3 +1,4 @@
+package com.jj.movies;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -23,9 +24,11 @@ public class DetailActivity extends AppCompatActivity {
         String mDesc = getIntent().getStringExtra("desc");
         String mStreamUrl = getIntent().getStringExtra("stream_url");
 
-        title.setText(mTitle);
-        desc.setText(mDesc);
-        Glide.with(this).load(mPoster).into(img);
+        if (mTitle != null) title.setText(mTitle);
+        if (mDesc != null) desc.setText(mDesc);
+        if (mPoster != null && !mPoster.isEmpty()) {
+            Glide.with(this).load(mPoster).into(img);
+        }
 
         btnWatchNow.setOnClickListener(v -> {
             Intent intent = new Intent(DetailActivity.this, PlayerActivity.class);
