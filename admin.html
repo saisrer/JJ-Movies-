@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JJ Movies - Admin Panel</title>
+    <!-- Supabase CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: Arial, sans-serif; background: #121212; color: #fff; padding: 20px; max-width: 600px; margin: auto; }
+        h2 { color: #e50914; text-align: center; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; color: #bbb; }
+        input, textarea { width: 100%; padding: 10px; background: #222; border: 1px solid #444; color: #fff; border-radius: 5px; box-sizing: border-box; }
+        button { background: #e50914; color: white; border: none; padding: 12px; width: 100%; font-size: 16px; font-weight: bold; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #b20710; }
+        #status { text-align: center; margin-top: 15px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <h2>JJ Movies Admin Panel</h2>
+
+    <div class="form-group">
+        <label>Movie Title:</label>
+        <input type="text" id="title" placeholder="e.g. Salaar / Animal">
+    </div>
+    <div class="form-group">
+        <label>Poster Image URL:</label>
+        <input type="text" id="posterUrl" placeholder="https://image-link.jpg">
+    </div>
+    <div class="form-group">
+        <label>Description:</label>
+        <textarea id="description" rows="3" placeholder="Short description..."></textarea>
+    </div>
+    <div class="form-group">
+        <label>Telegram Public Stream Link:</label>
+        <input type="text" id="streamUrl" placeholder="https://t.me/jj_movies_channel/15">
+    </div>
+    <div class="form-group">
+        <label>Quality & Audio:</label>
+        <input type="text" id="quality" value="1080p HEVC • DD+ 5.1">
+    </div>
+
+    <button onclick="addMovie()">Publish Movie</button>
+    <p id="status"></p>
+
+    <script>
+        // మీ Supabase డీటెయిల్స్ ఇక్కడ ఆటోమేటిక్‌గా సెట్ చేయబడ్డాయి
+        const SUPABASE_URL = "https://nwvjbdiifmdqiyparcbm.supabase.co";
+        const SUPABASE_KEY = "Sb_publishable_wrzX413fjkXqz6P-WplB6Q_bN5lAJLh";
+
+        async function addMovie() {
+            const title = document.getElementById('title').value.trim();
+            const poster_url = document.getElementById('posterUrl').value.trim();
+            const description = document.getElementById('description').value.trim();
+            const stream_url = document.getElementById('streamUrl').value.trim();
+            const quality = document.getElementById('quality').value.trim();
+            const status = document.getElementById('status');
+
+            if(!title || !poster_url || !stream_url) {
+                status.style.color = '#ff4444';
+                status.innerText = "Please fill all required fields!";
+                return;
+            }
+
+            status.style.color = '#ffeb3b';
+            status.innerText = "Adding movie...";
+
+            const { createClient } = supabase;
+            const _supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+            const { data, error } = await _supabase
+                .from('movies')
+                .insert([{ title, poster_url, description, stream_url, quality }]);
+
+            if (error) {
+                status.style.color = '#ff4444';
+                status.innerText = "Error: " + error.message;
+            } else {
+                status.style.color = '#4CAF50';
+                status.innerText = "Movie added successfully! 🚀";
+                document.getElementById('title').value = '';
+                document.getElementById('posterUrl').value = '';
+                document.getElementById('description').value = '';
+                document.getElementById('streamUrl').value = '';
+            }
+        }
+    </script>
+</body>
+</html>
