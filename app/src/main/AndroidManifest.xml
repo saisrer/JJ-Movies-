@@ -8,6 +8,7 @@
         android:allowBackup="true"
         android:label="JJ Movies"
         android:supportsRtl="true"
+        android:usesCleartextTraffic="true"
         android:theme="@style/Theme.AppCompat.NoActionBar">
         
         <activity
@@ -18,5 +19,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity android:name=".DetailActivity" android:exported="false" />
+        <activity android:name=".PlayerActivity" android:exported="false" />
+
     </application>
 </manifest>
