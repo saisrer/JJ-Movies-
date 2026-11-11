@@ -3,6 +3,7 @@ plugins {
 }
 
 android {
+    namespace 'com.jj.movies'
     compileSdk 34
 
     defaultConfig {
