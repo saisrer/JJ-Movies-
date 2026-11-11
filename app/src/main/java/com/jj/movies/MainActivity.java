@@ -2,16 +2,27 @@ package com.jj.movies;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,6 +30,10 @@ public class MainActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
     private MovieAdapter adapter;
     private List<MovieModel> movieList;
+
+    // Supabase Credentials
+    private static final String SUPABASE_URL = "https://nwvjbdiifmdqiyparcbm.supabase.co/rest/v1/movies?select=*";
+    private static final String SUPABASE_KEY = "Sb_publishable_wrzX413fjkXqz6P-WplB6Q_bN5lAJLh";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,8 +44,6 @@ public class MainActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(new GridLayoutManager(this, 2));
 
         movieList = new ArrayList<>();
-        // Sample static data for testing (Supabase fetch kosam tarvatha connect cheyochu)
-        movieList.add(new MovieModel("Sample Movie 1", "https://via.placeholder.com/300", "This is a sample movie description.", "https://www.sample-videos.com/video123/mp4/720/big_buck_bunny_720p_1mb.mp4"));
         
         adapter = new MovieAdapter(movieList, movie -> {
             Intent intent = new Intent(MainActivity.this, DetailActivity.class);
@@ -41,6 +54,57 @@ public class MainActivity extends AppCompatActivity {
             startActivity(intent);
         });
         recyclerView.setAdapter(adapter);
+
+        // Fetch movies from Supabase database
+        fetchMoviesFromSupabase();
+    }
+
+    private void fetchMoviesFromSupabase() {
+        new Thread(() -> {
+            try {
+                URL url = new URL(SUPABASE_URL);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("GET");
+                conn.setRequestProperty("apikey", SUPABASE_KEY);
+                conn.setRequestProperty("Authorization", "Bearer " + SUPABASE_KEY);
+
+                int responseCode = conn.getResponseCode();
+                if (responseCode == HttpURLConnection.HTTP_OK) {
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                    StringBuilder result = new StringBuilder();
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        result.append(line);
+                    }
+                    reader.close();
+
+                    // Parse JSON response
+                    JSONArray jsonArray = new JSONArray(result.toString());
+                    movieList.clear();
+
+                    for (int i = 0; i < jsonArray.length(); i++) {
+                        JSONObject obj = jsonArray.getJSONObject(i);
+                        String title = obj.optString("title", "No Title");
+                        String poster = obj.optString("poster_url", "");
+                        String description = obj.optString("description", "");
+                        
+                        // For now using empty streamUrl, later we can map movie_links table
+                        String streamUrl = obj.optString("stream_url", "");
+
+                        movieList.add(new MovieModel(title, poster, description, streamUrl));
+                    }
+
+                    // Update RecyclerView on Main Thread
+                    new Handler(Looper.getMainLooper()).post(() -> adapter.notifyDataSetChanged());
+                } else {
+                    new Handler(Looper.getMainLooper()).post(() -> 
+                        Toast.makeText(MainActivity.this, "Failed to load movies", Toast.LENGTH_SHORT).show()
+                    );
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
     }
 
     // Model class
