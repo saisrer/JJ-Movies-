@@ -33,7 +33,6 @@ dependencies {
     // ExoPlayer for Direct Video Streaming
     implementation 'com.google.android.exoplayer:exoplayer:2.19.1'
     
-    // OkHttp & JSON for Supabase connectivity
+    // OkHttp for Supabase connectivity
     implementation 'com.squareup.okhttp3:okhttp:4.10.0'
-    implementation 'org.json:json:20230224'
 }
