@@ -5,11 +5,11 @@ import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.MediaItem;
-import com.google.android.exoplayer2.ui.PlayerView;
+import com.google.android.exoplayer2.ui.StyledPlayerView;
 
 public class PlayerActivity extends AppCompatActivity {
     private ExoPlayer player;
-    private PlayerView playerView;
+    private StyledPlayerView playerView;
     private String streamUrl, movieTitle;
     private SharedPreferences prefs;
 
@@ -23,20 +23,23 @@ public class PlayerActivity extends AppCompatActivity {
         movieTitle = getIntent().getStringExtra("title");
         prefs = getSharedPreferences("JJMoviePrefs", MODE_PRIVATE);
 
+        // Initialize ExoPlayer
         player = new ExoPlayer.Builder(this).build();
         playerView.setPlayer(player);
 
-        MediaItem mediaItem = MediaItem.fromUri(streamUrl);
-        player.setMediaItem(mediaItem);
+        if (streamUrl != null && !streamUrl.isEmpty()) {
+            MediaItem mediaItem = MediaItem.fromUri(streamUrl);
+            player.setMediaItem(mediaItem);
 
-        // Resume position load cheyadam
-        long savedPosition = prefs.getLong(movieTitle + "_pos", 0);
-        if (savedPosition > 0) {
-            player.seekTo(savedPosition);
+            // Resume position load cheyadam
+            long savedPosition = prefs.getLong(movieTitle + "_pos", 0);
+            if (savedPosition > 0) {
+                player.seekTo(savedPosition);
+            }
+
+            player.prepare();
+            player.play();
         }
-
-        player.prepare();
-        player.play();
     }
 
     @Override
