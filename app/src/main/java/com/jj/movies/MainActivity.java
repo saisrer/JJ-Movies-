@@ -31,9 +31,9 @@ public class MainActivity extends AppCompatActivity {
     private MovieAdapter adapter;
     private List<MovieModel> movieList;
 
-    // Supabase Credentials
+    // Supabase Credentials (Updated with Legacy Anon JWT Key)
     private static final String SUPABASE_URL = "https://nwvjbdiifmdqiyparcbm.supabase.co/rest/v1/movies?select=*";
-    private static final String SUPABASE_KEY = "Sb_publishable_wrzX413fjkXqz6P-WplB6Q_bN5lAJLh";
+    private static final String SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im53dmpiZGlpZm1kcWl5cGFyY2JtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQzNzYwNDAsImV4cCI6MjEwOTk1MjA0MH0.PuJZ_3ZPMR-wyHh7GXURqu-nB0mpziknAFLztUKbASM";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,8 +87,6 @@ public class MainActivity extends AppCompatActivity {
                         String title = obj.optString("title", "No Title");
                         String poster = obj.optString("poster_url", "");
                         String description = obj.optString("description", "");
-                        
-                        // For now using empty streamUrl, later we can map movie_links table
                         String streamUrl = obj.optString("stream_url", "");
 
                         movieList.add(new MovieModel(title, poster, description, streamUrl));
@@ -136,6 +134,7 @@ public class MainActivity extends AppCompatActivity {
             return new ViewHolder(view);
         }
 
+        @NonNull
         @Override
         public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
             MovieModel movie = list.get(position);
